@@ -177,7 +177,7 @@ func initializeDatadogHQ(controller *caddy.Controller) error {
 					traceEnabled = true
 				}
 				if err != nil {
-					return controller.Err("datadog: not a valid boolean value for trace enabled")
+					return controller.Err("datadog: not a valid boolean value for trace_enabled")
 				}
 			case "trace_agent":
 				var args = controller.RemainingArgs()
@@ -187,7 +187,7 @@ func initializeDatadogHQ(controller *caddy.Controller) error {
 					traceAgent = TRACE_AGENT
 				}
 				if !hostnameRegex.MatchString(traceAgent) {
-					return controller.Err("datadog: not a valid address. Must be <hostname>:<port>")
+					return controller.Err("datadog: not a valid trace_agent address. Must be <hostname>:<port>")
 				}
 			}
 		}
