@@ -28,8 +28,10 @@ import (
 	"github.com/DataDog/datadog-go/statsd"
 	"github.com/mholt/caddy"
 	"github.com/mholt/caddy/caddyhttp/httpserver"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -40,6 +42,7 @@ const (
 	STATSD_RATE      = 1.0
 	STATSD_NAMESPACE = "caddy."
 	TICKER_INTERVAL  = 10.0
+	TRACE_AGENT      = "127.0.0.1:8126"
 )
 
 type DatadogModule struct {
@@ -130,6 +133,7 @@ func initializeDatadogHQ(controller *caddy.Controller) error {
 		currentDatadogModule.Metrics = getOrCreateMetrics(controller.RemainingArgs())
 
 		var statsdServer, statsdNamespace, statsdTags = "", glStatsdClient.Namespace, glStatsdClient.Tags
+		var traceEnabled, traceAgent = false, ""
 		for controller.NextBlock() {
 			switch controller.Val() {
 			case "statsd":
@@ -164,7 +168,31 @@ func initializeDatadogHQ(controller *caddy.Controller) error {
 					strings.HasPrefix(statsdNamespace, ".") {
 					return controller.Err("datadog: not a valid namespace")
 				}
+			case "trace_enabled":
+				var args = controller.RemainingArgs()
+				var err error
+				if len(args) > 0 {
+					traceEnabled, err = strconv.ParseBool(args[0])
+				} else {
+					traceEnabled = true
+				}
+				if err != nil {
+					return controller.Err("datadog: not a valid boolean value for trace enabled")
+				}
+			case "trace_agent":
+				var args = controller.RemainingArgs()
+				if len(args) > 0 {
+					traceAgent = args[0]
+				} else {
+					traceAgent = TRACE_AGENT
+				}
+				if !hostnameRegex.MatchString(traceAgent) {
+					return controller.Err("datadog: not a valid address. Must be <hostname>:<port>")
+				}
 			}
+		}
+		if traceEnabled {
+			tracer.Start(tracer.WithAgentAddr(traceAgent))
 		}
 		reconfigureStatsdClient(statsdServer, statsdNamespace, statsdTags)
 	}
@@ -252,6 +280,7 @@ func initializeDatadogHQ(controller *caddy.Controller) error {
 					}
 				case <-quit:
 					glTicker.Stop()
+					tracer.Stop()
 					return
 				}
 			}
