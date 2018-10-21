@@ -46,6 +46,7 @@ func (datadog DatadogModule) ServeHTTP(responseWriter http.ResponseWriter, reque
 		tracer.Tag(ext.HTTPURL, request.URL.Path),
 	}
 	span := tracer.StartSpan("caddy.request", spanOptions...)
+	tracer.Inject(span.Context(), tracer.HTTPHeadersCarrier(request.Header))
 	status, err := datadog.Next.ServeHTTP(responseRecorder, request)
 	atomic.AddUint64(&datadog.Metrics.responseTime, uint64(time.Since(timeStart).Nanoseconds()))
 
