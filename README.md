@@ -22,6 +22,7 @@ In the following example, all requests on _example-d.com_ won't be harvested.
         namespace     caddy.          # Optional
         trace_enabled                 # Optional - whether to enable tracing to Datadog APM
         trace_agent   127.0.0.1:8126  # Optional - can be any valid hostname with port
+        service_name  caddy           # Optional
       }
     }
 
