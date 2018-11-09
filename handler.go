@@ -38,7 +38,6 @@ func (datadog DatadogModule) ServeHTTP(responseWriter http.ResponseWriter, reque
 	responseRecorder := httpserver.NewResponseRecorder(responseWriter)
 	spanContext, _ := tracer.Extract(tracer.HTTPHeadersCarrier(request.Header))
 	spanOptions := []ddtrace.StartSpanOption{
-		tracer.ServiceName("caddy"),         // TODO: change this to a more useful service name
 		tracer.ResourceName(request.Method), // TODO: change this to a more useful resource name
 		tracer.SpanType(ext.SpanTypeWeb),
 		tracer.ChildOf(spanContext),
